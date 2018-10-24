@@ -1,22 +1,31 @@
 #!/bin/bash
 
 set -e
-RELEASE=2018-10-22
+
+RELEASE="${1:-2018-10-22}"
 LABEL='zap-serverless'
-BUILD_TAG=$(date +%Y%m%d)
-BUILD_DIR="./_builds/$RELEASE"
+BUILD_DIR="./_builds/${RELEASE}"
 HERE=$(pwd)
 
-rm -rf "$BUILD_DIR"
+if [ "${#RELEASE}" -ne 10 ]
+then
+  echo "[!] That is not a valid release input"
+  exit 1
+fi
 
-docker build --build-arg RELEASE="$RELEASE" . -t $LABEL
+rm -rf "${BUILD_DIR}"
 
+echo "[i] Building ZAP in container [release=${RELEASE}]"
+docker build --quiet --build-arg RELEASE="$RELEASE" . -t $LABEL
 container_id=$(docker run --rm --name $LABEL -d $LABEL  sleep 10)
 
-docker cp $container_id:/zap "$BUILD_DIR"
-touch "$BUILD_DIR/__init__.py"
-mv $BUILD_DIR/py/lib/python2.7/site-packages $BUILD_DIR/vendor
+echo '[i] Exporting ZAP assets from container'
+docker cp "$container_id:/zap" "${BUILD_DIR}"
+touch "${BUILD_DIR}/__init__.py"
+mv "${BUILD_DIR}/py/lib/python2.7/site-packages" "${BUILD_DIR}/vendor"
 
+
+echo '[i] Slimming ZAP down'
 IFS=$'\n'
 remove=(
   accessControl
@@ -40,13 +49,12 @@ remove=(
   jxbrowserlinux64
   invoke
 )
-
 for file in "${remove[@]}"
 do
-	bash -c "rm $BUILD_DIR/plugin/$file-*"
+	bash -c "rm ${BUILD_DIR}/plugin/${file}-*"
 done
 
+echo "[i] Packaging up build"
 cd "$BUILD_DIR"
-
-zip -r "zap-aws-${RELEASE}.zip" ./*
-mv "zap-aws-${RELEASE}.zip" "$HERE/_builds/"
+zip -q -r "zap-aws-${RELEASE}.zip" ./*
+mv "zap-aws-${RELEASE}.zip" "${HERE}/_builds/"
