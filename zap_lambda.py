@@ -51,8 +51,13 @@ def handler(event, context):
 	z.zap_wait_for_passive_scan(zap, timeout * 60)
 	alerts = z.zap_get_alerts(zap, target, blacklist, {})
 	urls = zap.core.urls()
-	zap.core.shutdown()
 
+	# Cleanup alerts and remove nodes
+ 	zap.core.delete_all_alerts()
+ 	for site in zap.core.sites:
+   		zap.core.delete_site_node(site)
+   	zap.core.run_garbage_collection()
+ 
 	return {
 	    "success": True,
 	    "urls": urls,
