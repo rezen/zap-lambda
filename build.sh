@@ -3,7 +3,7 @@
 set -e
 
 RELEASE="${1:-2018-10-22}"
-LABEL='zap-serverless'
+LABEL='zap-lambda'
 BUILD_DIR="./_builds/${RELEASE}"
 HERE=$(pwd)
 
@@ -22,7 +22,6 @@ container_id=$(docker run --rm --name $LABEL -d $LABEL  sleep 10)
 echo '[i] Exporting ZAP assets from container'
 docker cp "$container_id:/zap" "${BUILD_DIR}"
 touch "${BUILD_DIR}/__init__.py"
-mv "${BUILD_DIR}/py/lib/python2.7/site-packages" "${BUILD_DIR}/vendor"
 
 
 echo '[i] Slimming ZAP down'
