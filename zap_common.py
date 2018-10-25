@@ -267,6 +267,7 @@ def start_zap(port, extra_zap_params):
     here = os.path.dirname(os.path.realpath(__file__))
     env = os.environ.copy()
     env["PATH"] = "/tmp/:" + here + ":"  + env["PATH"]
+    env['JAVA_OPTS'] = "-Djava.util.prefs.systemRoot=/tmp -Djava.util.prefs.userRoot=/tmp " + env.get('JAVA_OPTS', "")
 
     with open('/tmp/zap.out', "w") as outfile:
         subprocess.Popen(params, stdout=outfile, env=env)

@@ -16,7 +16,7 @@ fi
 rm -rf "${BUILD_DIR}"
 
 echo "[i] Building ZAP in container [release=${RELEASE}]"
-docker build --quiet --build-arg RELEASE="$RELEASE" . -t $LABEL
+docker build --build-arg RELEASE="$RELEASE" . -t $LABEL
 container_id=$(docker run --rm --name $LABEL -d $LABEL  sleep 10)
 
 echo '[i] Exporting ZAP assets from container'

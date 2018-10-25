@@ -2,9 +2,9 @@ FROM amazonlinux:2.0.20181010
 
 WORKDIR /zap
 
-RUN yum install -y curl wget xmlstarlet unzip tar git python-pip git java-1.8.0-openjdk vim
+RUN yum install -y curl wget unzip tar git python-pip git java-1.8.0-openjdk vim procps
 
-RUN pip install --install-option="--prefix=/zap/py" python-owasp-zap-v2.4 setuptools && \
+RUN pip install boto3 && pip install -I --install-option="--prefix=/zap/py" urllib3 python-owasp-zap-v2.4 setuptools && \
   mv /zap/py/lib/python2.7/site-packages /zap/vendor && \
   rm -rf /zap/py
 
@@ -20,3 +20,4 @@ COPY zap_lambda.py  /zap/zap_lambda.py
 COPY zap_common.py  /zap/zap_common.py
 ENV PATH /zap/:$PATH
 ENV ZAP_PATH /zap/zap.sh
+RUN AWS_BUCKET=test python zap_lambda.py
