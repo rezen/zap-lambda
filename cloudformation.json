@@ -1,0 +1,107 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Deploy a POC for ZAP running in lambda",
+  "Parameters": {
+    "S3Bucket": {
+      "Description": "The S3 Bucket that holds the lambda code",
+      "Type": "String",
+      "Default": ""
+    },
+    "S3Key": {
+      "Description": "The S3 key for the lambda code zip file",
+      "Type": "String",
+      "Default": ""
+    },
+    "Region": {
+      "Type": "String",
+      "Default": "us-west-2"
+    }
+  },
+  "Resources": {
+    "LambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": "zap-lambda",
+        "Description": "A proof of concept for running ZAP in lambda",
+        "Handler": "zap_lambda.handler",
+        "Runtime": "python2.7",
+        "Code": {
+          "S3Bucket": {
+            "Ref": "S3Bucket"
+          },
+          "S3Key": {
+            "Ref": "S3Key"
+          }
+        },
+        "MemorySize": 512,
+        "Role": {
+          "Fn::GetAtt": [
+            "LambdaRole",
+            "Arn"
+          ]
+        },
+        "Environment": {},
+        "Timeout": 300
+      },
+      "DependsOn": "LambdaRole"
+    },
+    "LambdaRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "LambdaLogOnly",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "CloudWatchLogOnly",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": "arn:aws:logs:*:*:*"
+                }
+              ]
+            }
+          }
+        ],
+        "Path": {
+          "Fn::Sub": "/"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "LambdaFunctionARN": {
+      "Description": "The ARN of the lambda function",
+      "Value": {
+        "Fn::GetAtt": [
+          "LambdaFunction",
+          "Arn"
+        ]
+      },
+      "Export": {
+        "Name": "LambdaArn"
+      }
+    }
+  }
+}
