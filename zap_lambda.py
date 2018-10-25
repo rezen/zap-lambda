@@ -1,6 +1,9 @@
 import os
 import sys
 import json
+from datetime import datetime
+import hashlib
+import boto3
 
 # Also PYTHONPATH
 # https://joarleymoraes.com/hassle-free-python-lambda-deployment/
@@ -8,13 +11,13 @@ sys.path.append('vendor/')
 
 try:
 	import zap_common as z
-except Error as err:
+except Exception as err:
 	print("[!] Could not import zap_common")
 	raise err
 
 try:
 	from zapv2 import ZAPv2
-except Error as err:
+except Exception as err:
 	print("[!] Could not import zapv2")
 	raise err
 
@@ -22,10 +25,12 @@ except Error as err:
 with open("/tmp/zap.out", 'a'):
     os.utime("/tmp/zap.out", None)
 
+bucket = os.environ["AWS_BUCKET"]
 zap_ip = 'localhost'
-port = 8080
-timeout = 1
+port = z.get_free_port()
+timeout = os.environ.get("ZAP_TIMEOUT ", 1)
 blacklist = ['-1', '50003', '60000', '60001']
+s3 = boto3.client('s3')
 
 z.start_zap(port, ['-config', 'spider.maxDuration=2'])
 
@@ -44,6 +49,10 @@ def handler(event, context):
 			"messages": ["The target did not look like a url"]
 		}
 
+	start = datetime.today().strftime('%Y%m%d%H%I%s')
+	md5 = hashlib.md5()
+	md5.update(target)
+
 	zap = ZAPv2(proxies={'http': 'http://' + zap_ip + ':' + str(port), 'https': 'http://' + zap_ip + ':' + str(port)})
 	z.wait_for_zap_start(zap, timeout * 60)
 	access = z.zap_access_target(zap, target)
@@ -57,9 +66,20 @@ def handler(event, context):
  	for site in zap.core.sites:
    		zap.core.delete_site_node(site)
    	zap.core.run_garbage_collection()
- 
+ 	
+ 	data = {
+ 		"urls": urls,
+	    "alerts": alerts,
+ 	}
+
+ 	# Coming soon!
+ 	# s3.put_object(Body=json.dumps(data), Bucket=bucket, Key=key)
+
+ 	key = "zap/%s/%s.json" % (md5.hexdigest(), start)
+
 	return {
 	    "success": True,
-	    "urls": urls,
-	    "alerts": alerts,
+	    "bucket": bucket,
+	    "key": key,
+	    "data": data,
 	}

@@ -40,7 +40,14 @@
             "Arn"
           ]
         },
-        "Environment": {},
+        "Environment": {
+          "Variables": {
+            "AWS_BUCKET": {
+              "Ref": "S3Bucket"
+            },
+            "ZAP_TIMEOUT": "1"
+          }
+        },
         "Timeout": 300
       },
       "DependsOn": "LambdaRole"

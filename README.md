@@ -30,6 +30,12 @@ What if you could run ZAP in a lambda? That would be cool? This first POC spider
 ## AWS
 AWS limits total package size of 250mb, so I had to put ZAP on a diet to fit under that limit.
 
+**Env Variables**  
+- https://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html  
+
+**Python Packages**    
+- https://gist.github.com/gene1wood/4a052f39490fae00e0c3
+
 ### Slimming Down
 The following zap plugins were removed to make things fit into a lambda
 
