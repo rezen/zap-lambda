@@ -4,12 +4,14 @@ WORKDIR /zap
 
 RUN yum install -y curl wget xmlstarlet unzip tar git python-pip git java-1.8.0-openjdk vim
 
-RUN pip install --install-option="--prefix=/zap/py" python-owasp-zap-v2.4 setuptools
+RUN pip install --install-option="--prefix=/zap/py" python-owasp-zap-v2.4 setuptools && \
+  mv /zap/py/lib/python2.7/site-packages /zap/vendor && \
+  rm -rf /zap/py
 
 ARG RELEASE=2018-10-22
 RUN echo "Installing $RELEASE " && \
 wget -q https://github.com/zaproxy/zaproxy/releases/download/w$RELEASE/ZAP_WEEKLY_D-$RELEASE.zip && \	
-    unzip *.zip && \
+    unzip -q *.zip && \
 	rm *.zip && \
 	cp -R ZAP*/* . &&  \
 	rm -R ZAP* && tail -n2 zap.sh
