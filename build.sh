@@ -17,12 +17,17 @@ rm -rf "${BUILD_DIR}"
 
 echo "[i] Building ZAP in container [release=${RELEASE}]"
 docker build --build-arg RELEASE="$RELEASE" . -t $LABEL
+
+echo '[i] Doing quick test run to cover the basics'
+docker run --rm $LABEL /zap/run_local.sh
+sleep 1
+
 container_id=$(docker run --rm --name $LABEL -d $LABEL  sleep 10)
 
 echo '[i] Exporting ZAP assets from container'
 docker cp "$container_id:/zap" "${BUILD_DIR}"
 touch "${BUILD_DIR}/__init__.py"
-
+rm "${BUILD_DIR}/run_local.sh"
 
 echo '[i] Slimming ZAP down'
 IFS=$'\n'
