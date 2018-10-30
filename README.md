@@ -61,8 +61,11 @@ The following zap plugins were removed to make things fit into a lambda
 - invoke
 
 ## Todo
+- Move to using [serverless](https://serverless.com/) framework
+- Have locks for targets to ensure not running concurrent scans
 - Automate deployment to AWS
 - Have a local test environment
+- Use `zap_common.py` from main repo and replace changes with sed.
 - Custom builds for baseline|browser|api focused scans
 - Context handling
   - From s3 bucket or as event data
