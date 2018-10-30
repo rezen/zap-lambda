@@ -89,6 +89,34 @@
                 }
               ]
             }
+          },
+          {
+            "PolicyName": "S3PutOnly",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:Put*",
+                    "s3:Get*",
+                    "s3:List*"
+                  ],
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:aws:s3:::",
+                        {
+                          "Ref": "S3Bucket"
+                        },
+                        "/*"
+                      ]
+                    ]
+                  }
+                }
+              ]
+            }
           }
         ],
         "Path": {
