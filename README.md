@@ -8,6 +8,8 @@ What if you could run ZAP in a lambda? That would be cool? This first POC spider
 - AWS
   - `aws` cli
 
+docker-compose up --abort-on-container-exit
+
 ## Try it out
 - Create the package, run `./build.sh`
   - The artifact will be created in `_builds/zap-aws-*.zip`
@@ -30,6 +32,9 @@ What if you could run ZAP in a lambda? That would be cool? This first POC spider
 ## AWS
 AWS limits total package size of 250mb, so I had to put ZAP on a diet to fit under that limit.
 
+- https://github.com/p4tin/goaws
+- https://github.com/vsouza/docker-SQS-local
+- 
 **Env Variables**  
 - https://docs.aws.amazon.com/lambda/latest/dg/current-supported-versions.html  
 
@@ -72,7 +77,42 @@ The following zap plugins were removed to make things fit into a lambda
 - Persist session in bucket or RDS?
 - Option to have alerts sent to sns
 - Option to dump results into bucket
+- Emit events for stats
+- Option for collecting http messages
+- Stale job cleanup
 - Break up active scans tests into separate handlers so a separate lambda is run for each active scan test
   - Event would trigger with target and test name
   - Event would also include additional authentication for setup
     - Cookie, custom headers, etc
+
+
+## Scanning Persistence
+
+### v1 - Storage via s3
+```
+/zap-scans/
+  verified_domains # list of domains that have been verified
+  verified_sites # list of sites that have been verified
+  targets.json # list of target to scan, verified or not
+  config.json # global configs of durations etc
+  /_locks/
+    https_example_com.lock
+  /targets/
+    ids.json # file that contains all uuids
+    /https_example_com/
+      schedule # text file for how often the site should be scanned
+      config.json # for extra headers, alerts, duration, 
+      is_verified # has verification method details
+      /alerts/
+        2019006345345558922206.json
+        2019022117051550771586.json
+    /http_site_com/
+      config.json
+      is_verified
+  ...
+```
+
+### v2 - Storage via DynamoDB?
+
+
+AmazonS3

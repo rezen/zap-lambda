@@ -1,0 +1,25 @@
+version: '3'
+services:
+  zap-lambda:
+    build: .
+    environment:
+      IS_LOCAL: 1
+      LAMBDA_TIMEOUT: 10
+      PYTHONBUFFERED: 1
+      DYNAMODB_PREFIX: zap
+      DISABLE_VERIFY: 1
+    command: /zap/run_local.sh
+  localstack:
+    image: localstack/localstack:latest
+    privileged: true
+    ports:
+      - "4567-4582:4567-4582"
+      - "8080:8080"
+    environment:
+      - region=us-east-1
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - LAMBDA_EXECUTOR=docker
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    # - "/tmp/localstack:/tmp/localstack"

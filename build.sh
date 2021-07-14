@@ -53,6 +53,7 @@ remove=(
   jxbrowserlinux64
   invoke
 )
+ls -lah "${BUILD_DIR}/plugin/"
 for file in "${remove[@]}"
 do
 	bash -c "rm ${BUILD_DIR}/plugin/${file}-*"

@@ -1,3 +1,4 @@
 **.pyc
 _builds/*
 !_builds/.gitkeep
+.DS_Store

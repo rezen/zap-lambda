@@ -16,8 +16,10 @@ RUN pip install boto3 moto[server] && pip install -I --install-option="--prefix=
   mv /zap/py/lib/python2.7/site-packages /zap/vendor && \
   rm -rf /zap/py
 
+COPY ./lib /zap/lib
 COPY zap_lambda.py  /zap/zap_lambda.py
 COPY zap_common.py  /zap/zap_common.py
+
 COPY run_local.sh /zap/run_local.sh
 
 ENV PATH /zap/:$PATH
