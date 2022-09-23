@@ -4,9 +4,13 @@ import json
 from datetime import datetime
 import hashlib
 import boto3
+import logging
+import traceback
 from zapv2 import ZAPv2
 import zap_common as z
 
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def handler(event={}, context={}):
@@ -17,22 +21,20 @@ def handler(event={}, context={}):
         )
         if i
     ]
-    target = event.get("target", "").encode("utf8")
+    target = event.get("target", "")
     timeout = event.get("timeout", int(os.environ.get("ZAP_TIMEOUT", 1)))
     ignore_alert_ids = event.get("ignore_alert_ids", default_ignore_ids)
     s3_key = None
 
     md5 = hashlib.md5()
-    md5.update(target)
+    md5.update(target.encode("utf8"))
     target_hash = md5.hexdigest()
 
     if not target:
-        return {
-            'error': 'Not a valid target'
-        }
+        return {"error": "Not a valid target"}
 
     port = z.get_free_port()
-    z.start_zap(port, ["-config", "spider.maxDuration=2"])
+    z.start_zap(port, ["-config", "spider.maxDuration=2", "-dir", "/tmp"])
     start = datetime.today().strftime("%Y%m%d%H%I%s")
     zap = ZAPv2(
         proxies={
@@ -43,13 +45,11 @@ def handler(event={}, context={}):
     try:
         z.wait_for_zap_start(zap, timeout * 60)
     except Exception as err:
-        with open('/tmp/zap.out', 'r') as fh:
+        with open("/tmp/zap.out", "r") as fh:
             print(fh.read())
 
         print(err)
-        return {
-            'error': 'Could not fire up ZAP'
-        }
+        return {"error": "Could not fire up ZAP"}
     zap_version = zap.core.version
     access = z.zap_access_target(zap, target)
     # z.zap_spider(zap, target)
@@ -66,23 +66,26 @@ def handler(event={}, context={}):
     zap.core.run_garbage_collection()
     zap.core.shutdown()
 
-
-    if 'S3_BUCKET' in os.environ:
+    if "S3_BUCKET" in os.environ:
         print("-- Saving to s3 bucket")
         s3_key = f"zap/results/{target_hash}/alerts.json"
+        bucket = os.environ["S3_BUCKET"]
         try:
-            boto3.client('s3').put_object(Body=json.dumps(alerts), Bucket=os.environ['S3_BUCKET'], Key=s3_key, ACL='private', Metadata={
-                'target': target,
-                'zap_version': zap_version
-            })
+            boto3.client("s3").put_object(
+                Body=json.dumps(alerts, default=str),
+                Bucket=bucket,
+                Key=s3_key,
+                ACL="private",
+                Metadata={"target": target, "zap_version": zap_version},
+            )
         except Exception as err:
             print("-- Had error with s3")
-            print(err)
+            traceback.print_exc()
 
     return {
         "target_hash": target_hash,
         "start": start,
         "urls": urls,
-        's3_key': s3_key,
+        "s3_key": s3_key,
         "alerts_count": len(alerts),
     }
