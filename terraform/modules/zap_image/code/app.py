@@ -1,5 +1,5 @@
-from __future__ import print_function
 import os
+import sys
 import json
 from datetime import datetime
 import hashlib
@@ -10,7 +10,12 @@ from zapv2 import ZAPv2
 import zap_common as z
 
 
-logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO if "PYTHONDEBUG" not in os.environ else logging.DEBUG)
+streamer = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter("level=%(levelname)s - %(message)s")
+streamer.setFormatter(formatter)
+logger.addHandler(streamer)
 
 
 def handler(event={}, context={}):
@@ -23,6 +28,7 @@ def handler(event={}, context={}):
     ]
     target = event.get("target", "")
     timeout = event.get("timeout", int(os.environ.get("ZAP_TIMEOUT", 1)))
+    spider_max = int(event.get("spider_max", int(os.environ.get("ZAP_SPIDER_MAX", 2))))
     ignore_alert_ids = event.get("ignore_alert_ids", default_ignore_ids)
     s3_key = None
 
@@ -31,10 +37,12 @@ def handler(event={}, context={}):
     target_hash = md5.hexdigest()
 
     if not target:
+        logger.error(f"Had an invalid target")
         return {"error": "Not a valid target"}
 
+    logger.info(f"About to scan target={target}")
     port = z.get_free_port()
-    z.start_zap(port, ["-config", "spider.maxDuration=2", "-dir", "/tmp"])
+    z.start_zap(port, ["-config", f"spider.maxDuration={spider_max}", "-dir", "/tmp"])
     start = datetime.today().strftime("%Y%m%d%H%I%s")
     zap = ZAPv2(
         proxies={
@@ -46,16 +54,22 @@ def handler(event={}, context={}):
         z.wait_for_zap_start(zap, timeout * 60)
     except Exception as err:
         with open("/tmp/zap.out", "r") as fh:
-            print(fh.read())
+            logger.error(fh.read())
 
-        print(err)
+        logger.error(err)
         return {"error": "Could not fire up ZAP"}
     zap_version = zap.core.version
     access = z.zap_access_target(zap, target)
     # z.zap_spider(zap, target)
-    z.zap_ajax_spider(zap, target, 1)
+
+    logger.info(f"About to ajax-spider target={target}")
+
+    z.zap_ajax_spider(zap, target, 2)
+    logger.info(f"Starting to wait for passive scan")
 
     z.zap_wait_for_passive_scan(zap, timeout * 60)
+    logger.info(f"Passve scan ... no longer waiting")
+
     alerts = z.zap_get_alerts(zap, target, ignore_alert_ids, {})
     urls = zap.core.urls()
 
@@ -67,9 +81,9 @@ def handler(event={}, context={}):
     zap.core.shutdown()
 
     if "S3_BUCKET" in os.environ:
-        print("-- Saving to s3 bucket")
-        s3_key = f"zap/results/{target_hash}/alerts.json"
         bucket = os.environ["S3_BUCKET"]
+        logger.info(f"Saving to s3 bucket={bucket}")
+        s3_key = f"zap/results/{target_hash}/alerts.json"
         try:
             boto3.client("s3").put_object(
                 Body=json.dumps(alerts, default=str),
@@ -79,7 +93,7 @@ def handler(event={}, context={}):
                 Metadata={"target": target, "zap_version": zap_version},
             )
         except Exception as err:
-            print("-- Had error with s3")
+            logger.error("Had error with s3")
             traceback.print_exc()
 
     return {
@@ -89,3 +103,8 @@ def handler(event={}, context={}):
         "s3_key": s3_key,
         "alerts_count": len(alerts),
     }
+
+
+if __name__ == "__main__":
+    response = handler({"target": sys.argv[1]})
+    print(response)
