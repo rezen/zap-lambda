@@ -9,7 +9,9 @@ locals {
 }
 
 module "zap_image" {
-  source = "git::https://github.com/rezen/zap-lambda.git//terraform/modules/zap_image"
+  # If you are using this module ... pull (or copy) the remote. I'm using a relative path here to simplify testing
+  # source = "git::https://github.com/rezen/zap-lambda.git//terraform/modules/zap_image"
+  source = "../../modules/zap_image"
 }
 
 resource "aws_s3_bucket" "data" {
