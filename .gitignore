@@ -1,3 +1,9 @@
-**.pyc
-_builds/*
-!_builds/.gitkeep
+__pycache__
+*.pyc
+.terragrunt-cache
+**.tfplan
+**.terraform.lock.hcl
+terragrunt-debug.tfvars.json
+.DS_Store
+.terraform.tfstate.lock.info
+terraform.tfstate
