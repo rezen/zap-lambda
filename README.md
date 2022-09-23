@@ -15,7 +15,7 @@ These requirements are to run use terraform to deploy an image to AWS.
 
 
 ### Terraform
-To deploy the image to ECR, pull the module and include in your terraform code. For a fully fleshed out example checkout `terraform/envs/test`
+Deploying the ZAP lambda base image to ECR, simply define a module with the source of this repo following the example below. For a fully fleshed out example checkout `terraform/envs/test`
 ```
 module "zap_image" {
   source = "git::https://github.com/rezen/zap-lambda.git//terraform/modules/zap_image"
