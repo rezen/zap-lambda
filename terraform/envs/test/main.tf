@@ -98,8 +98,10 @@ resource "aws_lambda_function" "zap" {
 
   environment {
     variables = {
-      HOME      = "/tmp"
-      S3_BUCKET = aws_s3_bucket.data.bucket
+      PYTHONUNBUFFERED = "1"
+      JAVA_OPTS        = "-Djava.util.prefs.systemRoot=/tmp -Djava.util.prefs.userRoot=/tmp"
+      HOME             = "/tmp"
+      S3_BUCKET        = aws_s3_bucket.data.bucket
     }
   }
 }
