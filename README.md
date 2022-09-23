@@ -14,6 +14,14 @@ These requirements are to run use terraform to deploy an image to AWS.
   - `aws` cli
 
 
+### Terraform
+To deploy the image to ECR, pull the module and include in your terraform code. For a fully fleshed out example checkout `terraform/envs/test`
+```
+module "zap_image" {
+  source = "git::https://github.com/rezen/zap-lambda.git//terraform/modules/zap_image"
+  image_name = "zap-lambda"
+}
+```
 
 ### Lambda
 This is a sample of the event data you can invoke the lambda with.

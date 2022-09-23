@@ -9,7 +9,7 @@ locals {
 }
 
 module "zap_image" {
-  source = "../../modules/zap_image"
+  source = "git::https://github.com/rezen/zap-lambda.git//terraform/modules/zap_image"
 }
 
 resource "aws_s3_bucket" "data" {
